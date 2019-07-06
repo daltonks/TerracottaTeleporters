@@ -9,8 +9,5 @@
         <module name="TerracottaPortals" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="TerracottaPortals" target="1.5" />
-    </bytecodeTargetLevel>
   </component>
 </project>

@@ -1,6 +1,6 @@
 name: Terracotta Portals
 version: 1.0.0
 author: Dalton Spillman, Carlos Ayala
-main: TerracottaPortals.Plugin
+main: com.github.daltonks.Plugin
 api-version: 1.14.3
 website: https://github.com/daltonks/TerracottaPortals
