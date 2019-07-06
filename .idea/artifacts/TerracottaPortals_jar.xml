@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="TerracottaPortals:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/TerracottaPortals_jar</output-path>
+    <root id="archive" name="TerracottaPortals.jar">
+      <element id="module-output" name="TerracottaPortals" />
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="repos" />
+      <element id="library" level="project" name="Maven: org.spigotmc:spigot-api:1.14.3-SNAPSHOT" />
+    </root>
+  </artifact>
+</component>
