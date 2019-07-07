@@ -6,7 +6,7 @@ public class Plugin extends JavaPlugin {
     private boolean initialized;
 
     private SQLiteDB sqliteDB;
-    private PortalService portalService;
+    private TeleporterService teleporterService;
 
     @Override
     public void onEnable() {
@@ -16,12 +16,12 @@ public class Plugin extends JavaPlugin {
             sqliteDB = new SQLiteDB(getDataFolder(), getLogger());
             sqliteDB.openConnection();
 
-            portalService = new PortalService(sqliteDB);
+            teleporterService = new TeleporterService(sqliteDB);
         } else {
             sqliteDB.openConnection();
         }
 
-        getServer().getPluginManager().registerEvents(new BlockListener(portalService), this);
+        getServer().getPluginManager().registerEvents(teleporterService, this);
     }
 
     @Override

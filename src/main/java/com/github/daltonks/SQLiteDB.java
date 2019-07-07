@@ -24,7 +24,7 @@ public class SQLiteDB {
             }
 
             connection = DriverManager.getConnection(
-                "jdbc:sqlite:" + Paths.get(directory.getPath(), "TerracottaPortals.db").toString()
+                "jdbc:sqlite:" + Paths.get(directory.getPath(), "TerracottaTeleporters.db").toString()
             );
 
             migrate();
@@ -36,21 +36,16 @@ public class SQLiteDB {
     private void migrate() throws SQLException {
         try(Statement statement = connection.createStatement()) {
 
-            statement.addBatch("CREATE TABLE IF NOT EXISTS \"Portal\" (\n" +
-                               "\t\"Id\"\tINTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n" +
-                               "\t\"Material\"\tINTEGER NOT NULL,\n" +
-                               "\t\"X\"\tREAL NOT NULL,\n" +
-                               "\t\"Y\"\tREAL NOT NULL,\n" +
-                               "\t\"Z\"\tREAL NOT NULL\n" +
-                               ");");
+            statement.addBatch("CREATE TABLE IF NOT EXISTS \"Teleporter\" (\n" +
+                                "\t\"X\"\tINTEGER NOT NULL,\n" +
+                                "\t\"Y\"\tINTEGER NOT NULL,\n" +
+                                "\t\"Z\"\tINTEGER NOT NULL,\n" +
+                                "\t\"WorldUUID\"\tTEXT NOT NULL,\n" +
+                                "\t\"Material\"\tINTEGER NOT NULL,\n" +
+                                "\tPRIMARY KEY(\"X\",\"Y\",\"Z\")\n" +
+                                ") WITHOUT ROWID;");
 
-            statement.addBatch("CREATE INDEX IF NOT EXISTS \"Portal.Location\" ON \"Portal\" (\n" +
-                               "\t\"X\",\n" +
-                               "\t\"Y\",\n" +
-                               "\t\"Z\"\n" +
-                               ");");
-
-            statement.addBatch("CREATE INDEX IF NOT EXISTS \"Portal.Material\" ON \"Portal\" (\n" +
+            statement.addBatch("CREATE INDEX IF NOT EXISTS \"Teleporter.Material\" ON \"Teleporter\" (\n" +
                                "\t\"Material\"\n" +
                                ");");
 
