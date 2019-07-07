@@ -3,3 +3,4 @@ version: 1.0.0
 author: Dalton Spillman, Carlos Ayala
 main: com.github.daltonks.Plugin
 website: https://github.com/daltonks/TerracottaPortals
+api-version: "1.14"

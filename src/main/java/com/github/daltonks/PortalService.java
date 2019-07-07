@@ -4,8 +4,8 @@ import org.bukkit.Material;
 
 import java.util.HashMap;
 
-public class TerracottaBlocks {
-    private static HashMap<Material, Integer> materialToIdMap = new HashMap<Material, Integer>();
+public class PortalService {
+    private static HashMap<Material, Integer> materialToIdMap = new HashMap<>();
 
     static {
         materialToIdMap.put(Material.BLACK_TERRACOTTA, 0);
@@ -24,7 +24,7 @@ public class TerracottaBlocks {
         materialToIdMap.put(Material.RED_TERRACOTTA, 13);
         materialToIdMap.put(Material.WHITE_TERRACOTTA, 14);
         materialToIdMap.put(Material.YELLOW_TERRACOTTA, 15);
-        
+
         materialToIdMap.put(Material.BLACK_GLAZED_TERRACOTTA, 16);
         materialToIdMap.put(Material.BLUE_GLAZED_TERRACOTTA, 17);
         materialToIdMap.put(Material.BROWN_GLAZED_TERRACOTTA, 18);
@@ -43,7 +43,13 @@ public class TerracottaBlocks {
         materialToIdMap.put(Material.YELLOW_GLAZED_TERRACOTTA, 31);
     }
 
-    public static Integer getId(Material material) {
-        return materialToIdMap.get(material);
+    private final SQLiteDB db;
+
+    public PortalService(SQLiteDB db) {
+        this.db = db;
+    }
+
+    public boolean isPortalMaterial(Material material) {
+        return materialToIdMap.get(material) != null;
     }
 }
