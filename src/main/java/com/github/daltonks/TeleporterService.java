@@ -1,5 +1,6 @@
 package com.github.daltonks;
 
+import javafx.util.Pair;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -8,7 +9,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TeleporterService implements Listener {
     private static final HashMap<Material, Integer> TERRACOTTA_MATERIAL_TO_ID_MAP = new HashMap<>();
@@ -50,35 +55,61 @@ public class TeleporterService implements Listener {
     }
 
     private final SQLiteDB db;
+    private final Logger logger;
 
-    public TeleporterService(SQLiteDB db) {
+    public TeleporterService(SQLiteDB db, Logger logger) {
         this.db = db;
+        this.logger = logger;
     }
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        Location teleporterLocation = getTeleporterLocation(event.getBlockPlaced());
-        if(teleporterLocation != null) {
+        Pair<Location, Integer> teleporterInfo = getTeleporterLocation(event.getBlockPlaced());
+        if(teleporterInfo != null) {
+            Location location = teleporterInfo.getKey();
+            int terracottaMaterialId = teleporterInfo.getValue();
 
+            try (PreparedStatement statement = db.getConnection().prepareStatement("INSERT INTO Teleporter VALUES (?, ?, ?, ?, ?)")) {
+                statement.setString(1, location.getWorld().getUID().toString());
+                statement.setInt(2, location.getBlockX());
+                statement.setInt(3, location.getBlockY());
+                statement.setInt(4, location.getBlockZ());
+                statement.setInt(5, terracottaMaterialId);
+
+                statement.executeUpdate();
+            } catch (SQLException e) {
+                logger.log(Level.SEVERE, "Creating teleporter error", e);
+            }
         }
     }
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        Location teleporterLocation = getTeleporterLocation(event.getBlock());
-        if(teleporterLocation != null) {
+        Pair<Location, Integer> teleporterInfo = getTeleporterLocation(event.getBlock());
+        if(teleporterInfo != null) {
+            Location location = teleporterInfo.getKey();
 
+            try (PreparedStatement statement = db.getConnection().prepareStatement("DELETE FROM Teleporter WHERE WorldUUID = ? AND X = ? AND Y = ? AND Z = ?")) {
+                statement.setString(1, location.getWorld().getUID().toString());
+                statement.setInt(2, location.getBlockX());
+                statement.setInt(3, location.getBlockY());
+                statement.setInt(4, location.getBlockZ());
+
+                statement.executeUpdate();
+            } catch (SQLException e) {
+                logger.log(Level.SEVERE, "Deleting teleporter error", e);
+            }
         }
     }
 
-    private Location getTeleporterLocation(Block block) {
+    private Pair<Location, Integer> getTeleporterLocation(Block block) {
         Material material = block.getType();
 
         if(material == Material.GOLD_BLOCK) {
             Block topBlock = block.getWorld().getBlockAt(block.getX(), block.getY() + 1, block.getZ());
             Integer terracottaMaterialId = TERRACOTTA_MATERIAL_TO_ID_MAP.get(topBlock.getType());
             if(terracottaMaterialId != null) {
-                return block.getLocation();
+                return new Pair<>(block.getLocation(), terracottaMaterialId);
             }
         }
         else {
@@ -86,7 +117,7 @@ public class TeleporterService implements Listener {
             if(terracottaMaterialId != null) {
                 Block bottomBlock = block.getWorld().getBlockAt(block.getX(), block.getY() - 1, block.getZ());
                 if(bottomBlock.getType() == Material.GOLD_BLOCK) {
-                    return bottomBlock.getLocation();
+                    return new Pair<>(bottomBlock.getLocation(), terracottaMaterialId);
                 }
             }
         }

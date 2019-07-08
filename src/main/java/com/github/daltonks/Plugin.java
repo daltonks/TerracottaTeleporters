@@ -16,7 +16,7 @@ public class Plugin extends JavaPlugin {
             sqliteDB = new SQLiteDB(getDataFolder(), getLogger());
             sqliteDB.openConnection();
 
-            teleporterService = new TeleporterService(sqliteDB);
+            teleporterService = new TeleporterService(sqliteDB, getLogger());
         } else {
             sqliteDB.openConnection();
         }

@@ -37,13 +37,13 @@ public class SQLiteDB {
         try(Statement statement = connection.createStatement()) {
 
             statement.addBatch("CREATE TABLE IF NOT EXISTS \"Teleporter\" (\n" +
-                                "\t\"X\"\tINTEGER NOT NULL,\n" +
-                                "\t\"Y\"\tINTEGER NOT NULL,\n" +
-                                "\t\"Z\"\tINTEGER NOT NULL,\n" +
-                                "\t\"WorldUUID\"\tTEXT NOT NULL,\n" +
-                                "\t\"Material\"\tINTEGER NOT NULL,\n" +
-                                "\tPRIMARY KEY(\"X\",\"Y\",\"Z\")\n" +
-                                ") WITHOUT ROWID;");
+                               "\t\"WorldUUID\"\tTEXT NOT NULL,\n" +
+                               "\t\"X\"\tINTEGER NOT NULL,\n" +
+                               "\t\"Y\"\tINTEGER NOT NULL,\n" +
+                               "\t\"Z\"\tINTEGER NOT NULL,\n" +
+                               "\t\"Material\"\tINTEGER NOT NULL,\n" +
+                               "\tPRIMARY KEY(\"X\",\"Y\",\"Z\", \"WorldUUID\")\n" +
+                               ");");
 
             statement.addBatch("CREATE INDEX IF NOT EXISTS \"Teleporter.Material\" ON \"Teleporter\" (\n" +
                                "\t\"Material\"\n" +
