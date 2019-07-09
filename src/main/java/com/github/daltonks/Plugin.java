@@ -8,7 +8,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class Plugin extends JavaPlugin implements Listener {
+public class Plugin extends JavaPlugin {
     private boolean initialized;
 
     private SQLiteDB sqliteDB;
@@ -23,25 +23,17 @@ public class Plugin extends JavaPlugin implements Listener {
             sqliteDB.openConnection();
 
             TeleporterRepo teleporterRepo = new TeleporterRepo(sqliteDB, getLogger());
+
             teleporterService = new TeleporterService(teleporterRepo);
         } else {
             sqliteDB.openConnection();
         }
 
-        getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(teleporterService, this);
     }
+
     @Override
     public void onDisable() {
         sqliteDB.closeConnection();
-    }
-
-    @EventHandler
-    public void onBlockPlace(BlockPlaceEvent event) {
-        teleporterService.tryCreateAtBlock(event.getBlockPlaced());
-    }
-
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-
     }
 }

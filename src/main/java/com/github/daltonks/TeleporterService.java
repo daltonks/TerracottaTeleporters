@@ -3,10 +3,15 @@ package com.github.daltonks;
 import com.github.daltonks.sqlite.TeleporterRepo;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
 
-public class TeleporterService {
+public class TeleporterService implements Listener {
     private static final HashMap<Material, Integer> TERRACOTTA_MATERIAL_TO_ID_MAP = new HashMap<>();
 
     static {
@@ -51,7 +56,9 @@ public class TeleporterService {
         this.repo = repo;
     }
 
-    public void tryCreateAtBlock(Block block) {
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event) {
+        Block block = event.getBlockPlaced();
         Material material = block.getType();
 
         if(material == Material.GOLD_BLOCK) {
@@ -84,6 +91,14 @@ public class TeleporterService {
                     repo.add(teleporter);
                 }
             }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        ItemStack itemStack = event.getItem();
+        if(itemStack != null && itemStack.getType() == Material.CLAY_BALL) {
+            
         }
     }
 }
