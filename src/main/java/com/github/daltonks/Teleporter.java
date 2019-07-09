@@ -5,14 +5,14 @@ public class Teleporter {
     private final int x;
     private final int y;
     private final int z;
-    private final int terracottaMaterialId;
+    private final int terracottaMaterialID;
 
-    public Teleporter(String worldName, int x, int y, int z, int terracottaMaterialId) {
+    public Teleporter(String worldName, int x, int y, int z, int terracottaMaterialID) {
         this.worldName = worldName;
         this.x = x;
         this.y = y;
         this.z = z;
-        this.terracottaMaterialId = terracottaMaterialId;
+        this.terracottaMaterialID = terracottaMaterialID;
     }
 
     public String getWorldName() {
@@ -31,7 +31,7 @@ public class Teleporter {
         return z;
     }
 
-    public int getTerracottaMaterialId() {
-        return terracottaMaterialId;
+    public int getTerracottaMaterialID() {
+        return terracottaMaterialID;
     }
 }

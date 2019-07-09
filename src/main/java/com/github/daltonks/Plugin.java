@@ -2,10 +2,6 @@ package com.github.daltonks;
 
 import com.github.daltonks.sqlite.SQLiteDB;
 import com.github.daltonks.sqlite.TeleporterRepo;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Plugin extends JavaPlugin {
@@ -22,7 +18,7 @@ public class Plugin extends JavaPlugin {
             sqliteDB = new SQLiteDB(getDataFolder(), getLogger());
             sqliteDB.openConnection();
 
-            TeleporterRepo teleporterRepo = new TeleporterRepo(sqliteDB, getLogger());
+            TeleporterRepo teleporterRepo = new TeleporterRepo(sqliteDB);
 
             teleporterService = new TeleporterService(teleporterRepo);
         } else {

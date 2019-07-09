@@ -1,21 +1,16 @@
 package com.github.daltonks.sqlite;
 
 import com.github.daltonks.Teleporter;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class TeleporterRepo {
     private final SQLiteDB db;
-    private final Logger logger;
 
-    public TeleporterRepo(SQLiteDB db, Logger logger) {
+    public TeleporterRepo(SQLiteDB db) {
         this.db = db;
-        this.logger = logger;
     }
 
     public void addOrUpdate(Teleporter teleporter) throws SQLException {
@@ -25,7 +20,7 @@ public class TeleporterRepo {
             statement.setInt(2, teleporter.getX());
             statement.setInt(3, teleporter.getY());
             statement.setInt(4, teleporter.getZ());
-            statement.setInt(5, teleporter.getTerracottaMaterialId());
+            statement.setInt(5, teleporter.getTerracottaMaterialID());
 
             statement.executeUpdate();
         }
@@ -61,38 +56,38 @@ public class TeleporterRepo {
         }
 
         // Try to get next teleporter with a greater row ID
-        sql = "SELECT MIN(rowid) FROM Teleporter WHERE Material = ? AND rowid > ?";
-        try(PreparedStatement statement = db.getConnection().prepareStatement(sql)) {
-            statement.setInt(1, teleporter.getTerracottaMaterialId());
-            statement.setInt(2, rowId);
+        Teleporter nextTeleporter = getNextTeleporter(teleporter.getTerracottaMaterialID(), rowId, true);
 
-            try(ResultSet resultSet = statement.executeQuery()) {
-                if(resultSet.next()) {
-                    int nextRowId = resultSet.getInt("rowid");
-                    return get(nextRowId);
-                }
-            }
+        if(nextTeleporter != null) {
+            return nextTeleporter;
         }
 
         // Try to get next teleporter with a lesser row ID
-        sql = "SELECT MIN(rowid) FROM Teleporter WHERE Material = ? AND rowid < ?";
+        return getNextTeleporter(teleporter.getTerracottaMaterialID(), rowId, false);
+    }
+
+
+    private Teleporter getNextTeleporter(int terracottaMaterialId, int rowId, boolean greaterThan) throws SQLException {
+        // Get next rowid
+        String sql = greaterThan
+            ? "SELECT MIN(rowid) FROM Teleporter WHERE Material = ? AND rowid > ?"
+            : "SELECT MIN(rowid) FROM Teleporter WHERE Material = ? AND rowid < ?";
+
         try(PreparedStatement statement = db.getConnection().prepareStatement(sql)) {
-            statement.setInt(1, teleporter.getTerracottaMaterialId());
+            statement.setInt(1, terracottaMaterialId);
             statement.setInt(2, rowId);
 
             try(ResultSet resultSet = statement.executeQuery()) {
-                if(resultSet.next()) {
-                    int nextRowId = resultSet.getInt("rowid");
-                    return get(nextRowId);
+                if (!resultSet.next()) {
+                    return null;
                 }
+
+                rowId = resultSet.getInt("rowid");
             }
         }
 
-        return null;
-    }
-
-    private Teleporter get(int rowId) throws SQLException {
-        String sql = "SELECT * FROM Teleporter WHERE rowid = ?";
+        // Get Teleporter from rowid
+        sql = "SELECT * FROM Teleporter WHERE rowid = ?";
         try (PreparedStatement statement = db.getConnection().prepareStatement(sql)) {
             statement.setInt(1, rowId);
 

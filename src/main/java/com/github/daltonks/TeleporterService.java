@@ -10,7 +10,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.sql.SQLException;
-import java.util.HashMap;
 
 public class TeleporterService implements Listener {
     private final TeleporterRepo repo;
@@ -34,7 +33,8 @@ public class TeleporterService implements Listener {
                 Teleporter nextTeleporter = repo.getNext(teleporter);
                 if(nextTeleporter != null) {
                     // TODO: Keep trying the next teleporter until one
-                    // is found that isn't deleted in the world
+                    // is found that isn't deleted in the world.
+                    // Also delete them from the repo.
 
                     // TODO: Teleport player
                     itemStack.setAmount(itemStack.getAmount() - 1);
@@ -46,37 +46,52 @@ public class TeleporterService implements Listener {
     private Teleporter addOrUpdateTeleporterAt(Block block) throws SQLException {
         Material material = block.getType();
 
-        if(material == Material.GOLD_BLOCK) {
-            Block topBlock = block.getWorld().getBlockAt(block.getX(), block.getY() + 1, block.getZ());
-            Integer terracottaMaterialId = TerracottaMaterialIDs.getID(topBlock.getType());
-            if(terracottaMaterialId != null) {
-                Teleporter teleporter = new Teleporter(
-                    block.getWorld().getName(),
-                    block.getX(),
-                    block.getY(),
-                    block.getZ(),
-                    terracottaMaterialId
-                );
+        Integer terracottaMaterialID;
+        Block goldBlock;
 
-                repo.addOrUpdate(teleporter);
+        if(material == Material.GOLD_BLOCK) {
+            goldBlock = block;
+
+            Block terracottaBlock = block.getRelative(0, 1, 0);
+            terracottaMaterialID = TerracottaMaterialIDs.getID(terracottaBlock.getType());
+            if(terracottaMaterialID == null) {
+                return null;
             }
         } else {
-            Integer terracottaMaterialId = TerracottaMaterialIDs.getID(block.getType());
-            if(terracottaMaterialId != null) {
-                Block bottomBlock = block.getWorld().getBlockAt(block.getX(), block.getY() - 1, block.getZ());
-                if(bottomBlock.getType() == Material.GOLD_BLOCK) {
-                    Teleporter teleporter = new Teleporter(
-                        bottomBlock.getWorld().getName(),
-                        bottomBlock.getX(),
-                        bottomBlock.getY(),
-                        bottomBlock.getZ(),
-                        terracottaMaterialId
-                    );
+            terracottaMaterialID = TerracottaMaterialIDs.getID(material);
+            if(terracottaMaterialID == null) {
+                return null;
+            }
 
-                    repo.addOrUpdate(teleporter);
-                }
+            goldBlock = block.getRelative(0, -1, 0);
+            if(goldBlock.getType() != Material.GOLD_BLOCK) {
+                return null;
             }
         }
+
+        Block airBlock1 = goldBlock.getRelative(0, 2, 0);
+        if(airBlock1.getType() != Material.AIR
+                || airBlock1.getType() != Material.CAVE_AIR
+                || airBlock1.getType() != Material.VOID_AIR) {
+            return null;
+        }
+
+        Block airBlock2 = airBlock1.getRelative(0, 1, 0);
+        if(airBlock2.getType() != Material.AIR
+                || airBlock2.getType() != Material.CAVE_AIR
+                || airBlock2.getType() != Material.VOID_AIR) {
+            return null;
+        }
+
+        Teleporter teleporter = new Teleporter(
+            block.getWorld().getName(),
+            goldBlock.getX(),
+            goldBlock.getY(),
+            goldBlock.getZ(),
+            terracottaMaterialID
+        );
+
+        repo.addOrUpdate(teleporter);
 
         return null;
     }
