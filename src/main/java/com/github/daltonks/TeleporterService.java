@@ -1,14 +1,12 @@
-package com.github.daltonks.world;
+package com.github.daltonks;
 
-import javafx.geometry.Point3D;
-import org.bukkit.Location;
+import com.github.daltonks.sqlite.TeleporterRepo;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 
 import java.util.HashMap;
 
-public class Teleporter {
+public class TeleporterService {
     private static final HashMap<Material, Integer> TERRACOTTA_MATERIAL_TO_ID_MAP = new HashMap<>();
 
     static {
@@ -47,72 +45,45 @@ public class Teleporter {
         TERRACOTTA_MATERIAL_TO_ID_MAP.put(Material.YELLOW_GLAZED_TERRACOTTA, 31);
     }
 
-    public static Teleporter getAtBlock(Block block) {
+    private final TeleporterRepo repo;
+
+    public TeleporterService(TeleporterRepo repo) {
+        this.repo = repo;
+    }
+
+    public void tryCreateAtBlock(Block block) {
         Material material = block.getType();
 
         if(material == Material.GOLD_BLOCK) {
             Block topBlock = block.getWorld().getBlockAt(block.getX(), block.getY() + 1, block.getZ());
             Integer terracottaMaterialId = TERRACOTTA_MATERIAL_TO_ID_MAP.get(topBlock.getType());
             if(terracottaMaterialId != null) {
-                return new Teleporter(
-                    block.getWorld(),
+                Teleporter teleporter = new Teleporter(
+                    block.getWorld().getName(),
                     block.getX(),
                     block.getY(),
                     block.getZ(),
                     terracottaMaterialId
                 );
+
+                repo.add(teleporter);
             }
         } else {
             Integer terracottaMaterialId = TERRACOTTA_MATERIAL_TO_ID_MAP.get(block.getType());
             if(terracottaMaterialId != null) {
                 Block bottomBlock = block.getWorld().getBlockAt(block.getX(), block.getY() - 1, block.getZ());
                 if(bottomBlock.getType() == Material.GOLD_BLOCK) {
-                    return new Teleporter(
-                        bottomBlock.getWorld(),
+                    Teleporter teleporter = new Teleporter(
+                        bottomBlock.getWorld().getName(),
                         bottomBlock.getX(),
                         bottomBlock.getY(),
                         bottomBlock.getZ(),
                         terracottaMaterialId
                     );
+
+                    repo.add(teleporter);
                 }
             }
         }
-
-        return null;
-    }
-
-    private final World world;
-    private final int x;
-    private final int y;
-    private final int z;
-
-    private final int terracottaMaterialId;
-
-    private Teleporter(World world, int x, int y, int z, int terracottaMaterialId) {
-        this.world = world;
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.terracottaMaterialId = terracottaMaterialId;
-    }
-
-    public World getWorld() {
-        return world;
-    }
-
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
-    public int getZ() {
-        return z;
-    }
-
-    public int getTerracottaMaterialId() {
-        return terracottaMaterialId;
     }
 }
