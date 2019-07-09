@@ -1,4 +1,4 @@
-package com.github.daltonks;
+package com.github.daltonks.sqlite;
 
 import java.io.File;
 import java.nio.file.Paths;
