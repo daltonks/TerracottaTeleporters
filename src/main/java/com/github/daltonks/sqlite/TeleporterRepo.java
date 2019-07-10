@@ -13,35 +13,51 @@ public class TeleporterRepo {
         this.db = db;
     }
 
-    public void addOrUpdate(Teleporter teleporter) throws SQLException {
-        String sql = "INSERT OR REPLACE INTO Teleporter VALUES (?, ?, ?, ?, ?)";
+    public boolean addOrUpdate(Teleporter teleporter) throws SQLException {
+        Integer existingMaterial = null;
+        String sql = "SELECT Material FROM Teleporter WHERE WorldName = ? AND X = ? AND Y = ? AND Z = ?";
         try (PreparedStatement statement = db.getConnection().prepareStatement(sql)) {
             statement.setString(1, teleporter.getWorldName());
             statement.setInt(2, teleporter.getX());
             statement.setInt(3, teleporter.getY());
             statement.setInt(4, teleporter.getZ());
-            statement.setInt(5, teleporter.getTerracottaMaterialID());
 
-            statement.executeUpdate();
+            try(ResultSet resultSet = statement.executeQuery()) {
+                if(resultSet.next()) {
+                    existingMaterial = resultSet.getInt(1);
+                }
+            }
         }
+
+        if(existingMaterial == null) {
+            insert(teleporter);
+            return true;
+        } else if(existingMaterial != teleporter.getMaterialID()) {
+            delete(teleporter.getWorldName(), teleporter.getX(), teleporter.getY(), teleporter.getZ());
+            insert(teleporter);
+            return true;
+        }
+
+        return false;
     }
 
-    public void delete(Teleporter teleporter) throws SQLException {
-        String sql = "DELETE FROM Teleporter WHERE WorldName = ? AND X = ? AND Y = ? AND Z = ?";
+    private void insert(Teleporter teleporter) throws SQLException {
+        String sql = "INSERT INTO Teleporter VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement statement = db.getConnection().prepareStatement(sql)) {
             statement.setString(1, teleporter.getWorldName());
             statement.setInt(2, teleporter.getX());
             statement.setInt(3, teleporter.getY());
             statement.setInt(4, teleporter.getZ());
+            statement.setInt(5, teleporter.getMaterialID());
 
             statement.executeUpdate();
         }
     }
 
     public Teleporter getNext(Teleporter teleporter) throws SQLException {
-        int rowId;
+        // Get rowID
+        int rowID;
 
-        // Get rowid
         String sql = "SELECT rowid FROM Teleporter WHERE WorldName = ? AND X = ? AND Y = ? AND Z = ?";
         try (PreparedStatement statement = db.getConnection().prepareStatement(sql)) {
             statement.setString(1, teleporter.getWorldName());
@@ -51,45 +67,47 @@ public class TeleporterRepo {
 
             try(ResultSet resultSet = statement.executeQuery()) {
                 resultSet.next();
-                rowId = resultSet.getInt("rowid");
+                rowID = resultSet.getInt(1);
             }
         }
 
         // Try to get next teleporter with a greater row ID
-        Teleporter nextTeleporter = getNextTeleporter(teleporter.getTerracottaMaterialID(), rowId, true);
+        Teleporter nextTeleporter = getNextTeleporter(teleporter.getMaterialID(), rowID, true);
 
         if(nextTeleporter != null) {
             return nextTeleporter;
         }
 
         // Try to get next teleporter with a lesser row ID
-        return getNextTeleporter(teleporter.getTerracottaMaterialID(), rowId, false);
+        return getNextTeleporter(teleporter.getMaterialID(), rowID, false);
     }
 
-
-    private Teleporter getNextTeleporter(int terracottaMaterialId, int rowId, boolean greaterThan) throws SQLException {
-        // Get next rowid
+    private Teleporter getNextTeleporter(int terracottaMaterialId, int rowID, boolean greaterThan) throws SQLException {
+        // Get next rowID
         String sql = greaterThan
             ? "SELECT MIN(rowid) FROM Teleporter WHERE Material = ? AND rowid > ?"
             : "SELECT MIN(rowid) FROM Teleporter WHERE Material = ? AND rowid < ?";
 
         try(PreparedStatement statement = db.getConnection().prepareStatement(sql)) {
             statement.setInt(1, terracottaMaterialId);
-            statement.setInt(2, rowId);
+            statement.setInt(2, rowID);
 
             try(ResultSet resultSet = statement.executeQuery()) {
                 if (!resultSet.next()) {
                     return null;
                 }
 
-                rowId = resultSet.getInt("rowid");
+                rowID = resultSet.getInt(1);
+                if(rowID == 0) {
+                    return null;
+                }
             }
         }
 
-        // Get Teleporter from rowid
-        sql = "SELECT * FROM Teleporter WHERE rowid = ?";
+        // Get Teleporter from rowID
+        sql = "SELECT WorldName, X, Y, Z, Material FROM Teleporter WHERE rowid = ?";
         try (PreparedStatement statement = db.getConnection().prepareStatement(sql)) {
-            statement.setInt(1, rowId);
+            statement.setInt(1, rowID);
 
             try(ResultSet resultSet = statement.executeQuery()) {
                 resultSet.next();
@@ -102,6 +120,18 @@ public class TeleporterRepo {
                     resultSet.getInt("Material")
                 );
             }
+        }
+    }
+
+    public void delete(String worldName, int x, int y, int z) throws SQLException {
+        String sql = "DELETE FROM Teleporter WHERE WorldName = ? AND X = ? AND Y = ? AND Z = ?";
+        try (PreparedStatement statement = db.getConnection().prepareStatement(sql)) {
+            statement.setString(1, worldName);
+            statement.setInt(2, x);
+            statement.setInt(3, y);
+            statement.setInt(4, z);
+
+            statement.executeUpdate();
         }
     }
 }

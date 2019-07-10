@@ -1,11 +1,10 @@
 package com.github.daltonks;
 
 import com.github.daltonks.sqlite.TeleporterRepo;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -19,31 +18,61 @@ public class TeleporterService implements Listener {
     }
 
     @EventHandler
-    public void onBlockPlace(BlockPlaceEvent event) throws SQLException {
-        addOrUpdateTeleporterAt(event.getBlockPlaced());
-    }
-
-    @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) throws SQLException {
         ItemStack itemStack = event.getItem();
         Block clickedBlock = event.getClickedBlock();
         if(itemStack != null && itemStack.getType() == Material.CLAY_BALL && clickedBlock != null) {
-            Teleporter teleporter = addOrUpdateTeleporterAt(clickedBlock);
+            Teleporter teleporter = getTeleporterAt(clickedBlock);
             if(teleporter != null) {
-                Teleporter nextTeleporter = repo.getNext(teleporter);
-                if(nextTeleporter != null) {
-                    // TODO: Keep trying the next teleporter until one
-                    // is found that isn't deleted in the world.
-                    // Also delete them from the repo.
-
-                    // TODO: Teleport player
+                if(repo.addOrUpdate(teleporter)) {
+                    event.getPlayer().sendMessage(ChatColor.GREEN + "Teleporter activated!");
+                    event.getPlayer().getWorld().playEffect(
+                        event.getClickedBlock().getLocation().clone().add(0.5, 0, 0.5),
+                        Effect.DRAGON_BREATH,
+                        0
+                    );
                     itemStack.setAmount(itemStack.getAmount() - 1);
+                } else {
+                    while(true) {
+                        Teleporter nextTeleporterInRepo = repo.getNext(teleporter);
+                        if(nextTeleporterInRepo == null) {
+                            break;
+                        }
+
+                        World nextTeleporterWorld = Bukkit.createWorld(new WorldCreator(nextTeleporterInRepo.getWorldName()));
+                        Block nextTeleporterBlock = nextTeleporterWorld.getBlockAt(
+                            nextTeleporterInRepo.getX(),
+                            nextTeleporterInRepo.getY(),
+                            nextTeleporterInRepo.getZ()
+                        );
+                        Teleporter nextTeleporterInWorld = getTeleporterAt(nextTeleporterBlock);
+
+                        if(nextTeleporterInWorld == null) {
+                            repo.delete(
+                                nextTeleporterInRepo.getWorldName(),
+                                nextTeleporterInRepo.getX(),
+                                nextTeleporterInRepo.getY(),
+                                nextTeleporterInRepo.getZ()
+                            );
+                        } else {
+                            Location teleportLocation =
+                                nextTeleporterBlock.getRelative(0, 2, 0).getLocation().clone().add(0.5, 0, 0.5)
+                                    .setDirection(event.getPlayer().getLocation().getDirection());
+
+                            event.getPlayer().teleport(teleportLocation);
+                            itemStack.setAmount(itemStack.getAmount() - 1);
+
+                            event.getPlayer().getWorld().playEffect(teleportLocation, Effect.PORTAL_TRAVEL, 0);
+
+                            break;
+                        }
+                    }
                 }
             }
         }
     }
 
-    private Teleporter addOrUpdateTeleporterAt(Block block) throws SQLException {
+    private Teleporter getTeleporterAt(Block block) {
         Material material = block.getType();
 
         Integer terracottaMaterialID;
@@ -69,30 +98,26 @@ public class TeleporterService implements Listener {
             }
         }
 
-        Block airBlock1 = goldBlock.getRelative(0, 2, 0);
-        if(airBlock1.getType() != Material.AIR
-                || airBlock1.getType() != Material.CAVE_AIR
-                || airBlock1.getType() != Material.VOID_AIR) {
+        Material airBlock1Type = goldBlock.getRelative(0, 2, 0).getType();
+        if(        airBlock1Type != Material.AIR
+                && airBlock1Type != Material.CAVE_AIR
+                && airBlock1Type != Material.VOID_AIR) {
             return null;
         }
 
-        Block airBlock2 = airBlock1.getRelative(0, 1, 0);
-        if(airBlock2.getType() != Material.AIR
-                || airBlock2.getType() != Material.CAVE_AIR
-                || airBlock2.getType() != Material.VOID_AIR) {
+        Material airBlock2Type = goldBlock.getRelative(0, 3, 0).getType();
+        if(        airBlock2Type != Material.AIR
+                && airBlock2Type != Material.CAVE_AIR
+                && airBlock2Type != Material.VOID_AIR) {
             return null;
         }
 
-        Teleporter teleporter = new Teleporter(
+        return new Teleporter(
             block.getWorld().getName(),
             goldBlock.getX(),
             goldBlock.getY(),
             goldBlock.getZ(),
             terracottaMaterialID
         );
-
-        repo.addOrUpdate(teleporter);
-
-        return null;
     }
 }
