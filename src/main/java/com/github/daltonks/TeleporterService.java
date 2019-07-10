@@ -5,6 +5,7 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -15,6 +16,14 @@ public class TeleporterService implements Listener {
 
     public TeleporterService(TeleporterRepo repo) {
         this.repo = repo;
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) throws SQLException {
+        Teleporter teleporter = getTeleporterAt(event.getBlock());
+        if(teleporter != null) {
+            repo.delete(teleporter.getWorldName(), teleporter.getX(), teleporter.getY(), teleporter.getZ());
+        }
     }
 
     @EventHandler
