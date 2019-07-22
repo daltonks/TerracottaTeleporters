@@ -3,6 +3,10 @@ package com.github.daltonks;
 import com.github.daltonks.sqlite.TeleporterRepo;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Horse;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Tameable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -28,14 +32,15 @@ public class TeleporterService implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) throws SQLException {
+        Player player = event.getPlayer();
         ItemStack itemStack = event.getItem();
         Block clickedBlock = event.getClickedBlock();
         if(itemStack != null && itemStack.getType() == Material.CLAY_BALL && clickedBlock != null) {
             Teleporter teleporter = getTeleporterAt(clickedBlock);
             if(teleporter != null) {
                 if(repo.addOrUpdate(teleporter)) {
-                    event.getPlayer().sendMessage(ChatColor.GREEN + "Teleporter activated!");
-                    event.getPlayer().getWorld().playEffect(
+                    player.sendMessage(ChatColor.GREEN + "Teleporter activated!");
+                    player.getWorld().playEffect(
                         event.getClickedBlock().getLocation().clone().add(0.5, 0, 0.5),
                         Effect.DRAGON_BREATH,
                         0
@@ -66,12 +71,19 @@ public class TeleporterService implements Listener {
                         } else {
                             Location teleportLocation =
                                 nextTeleporterBlock.getRelative(0, 2, 0).getLocation().clone().add(0.5, 0, 0.5)
-                                    .setDirection(event.getPlayer().getLocation().getDirection());
+                                    .setDirection(player.getLocation().getDirection());
 
-                            event.getPlayer().teleport(teleportLocation);
+                            player.teleport(teleportLocation);
+
+                            Entity vehicle = player.getVehicle();
+                            if (vehicle != null) {
+                                vehicle.teleport(teleportLocation);
+                                vehicle.addPassenger(player);
+                            }
+
                             itemStack.setAmount(itemStack.getAmount() - 1);
 
-                            event.getPlayer().getWorld().playEffect(teleportLocation, Effect.PORTAL_TRAVEL, 0);
+                            player.getWorld().playEffect(teleportLocation, Effect.PORTAL_TRAVEL, 0);
 
                             break;
                         }
