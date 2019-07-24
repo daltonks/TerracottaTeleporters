@@ -4,9 +4,7 @@ import com.github.daltonks.sqlite.TeleporterRepo;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Tameable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -73,9 +71,12 @@ public class TeleporterService implements Listener {
                                 nextTeleporterBlock.getRelative(0, 2, 0).getLocation().clone().add(0.5, 0, 0.5)
                                     .setDirection(player.getLocation().getDirection());
 
+                            // Get vehicle before teleporting player,
+                            // because it turns null upon teleporting player
+                            Entity vehicle = player.getVehicle();
+
                             player.teleport(teleportLocation);
 
-                            Entity vehicle = player.getVehicle();
                             if (vehicle != null) {
                                 vehicle.teleport(teleportLocation);
                                 vehicle.addPassenger(player);
@@ -117,20 +118,6 @@ public class TeleporterService implements Listener {
             if(goldBlock.getType() != Material.GOLD_BLOCK) {
                 return null;
             }
-        }
-
-        Material airBlock1Type = goldBlock.getRelative(0, 2, 0).getType();
-        if(        airBlock1Type != Material.AIR
-                && airBlock1Type != Material.CAVE_AIR
-                && airBlock1Type != Material.VOID_AIR) {
-            return null;
-        }
-
-        Material airBlock2Type = goldBlock.getRelative(0, 3, 0).getType();
-        if(        airBlock2Type != Material.AIR
-                && airBlock2Type != Material.CAVE_AIR
-                && airBlock2Type != Material.VOID_AIR) {
-            return null;
         }
 
         return new Teleporter(
