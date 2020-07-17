@@ -1,6 +1,6 @@
 name: TerracottaTeleporters
-version: 1.2.0
-author: Dalton Spillman, Carlos Ayala
+version: 1.2.1
+author: Dalton Spillman
 main: com.github.daltonks.Plugin
 website: https://github.com/daltonks/TerracottaTeleporters
-api-version: "1.14"
+api-version: "1.16"
